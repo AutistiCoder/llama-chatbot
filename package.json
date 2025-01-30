@@ -1,6 +1,8 @@
 {
   "type": "module",
   "dependencies": {
+    "pdf-parse": "^1.1.1",
+    "pdf-parse-debugging-disabled": "^1.1.1",
     "tsx": "^4.19.2"
   }
 }
