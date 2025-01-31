@@ -3,6 +3,7 @@ import { readFile } from "fs";
 import * as fs from "fs/promises";
 import * as readline from "readline";
 import pdf from "pdf-parse-debugging-disabled";
+import path, { extname, parse } from "path";
 type Message = {role: string, content: string};
 const decoder = new TextDecoder("utf-8")
 const messages: Message[] = [];
@@ -37,12 +38,23 @@ const logOutput = async (reader: ReadableStreamDefaultReader)=>{
         process.stdout.write(parsed.message.content);
     }
 };
+async function parsePDF(fileBuffer: Buffer)
+{
+    const pdfData = await pdf(fileBuffer);
+    return pdfData;
+};
 rl.question("which document?", async (answer) => {
     try {
         const fileBuffer = await fs.readFile(answer);
-        const pdfData = await pdf(fileBuffer);
-
-        addMessage({ role: "system", content: `Here is the document content. Answer user questions strictly based on this content. No outside knowledge.\n\n${pdfData.text}` });
+        const extension = extname(answer);
+        let text: string | null = null;
+        if (extension === ".pdf")
+            text = await parsePDF(fileBuffer);
+        else if (extension === ".txt")
+            text = decoder.decode(fileBuffer);
+        else
+            throw `unsupported file extension ${extension}`;
+        addMessage({ role: "system", content: `Here is the document content. Answer user questions strictly based on this content. No outside knowledge.\n\n${text}` });
 
         rl.question("What would you like to say to the chatbot? ", async (userInput) => {
             addMessage({ role: "user", content: userInput });
